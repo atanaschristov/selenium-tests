@@ -1,9 +1,7 @@
 const assert = require('assert').strict;
 const By = require('selenium-webdriver').By
 const { Given, Then, When } = require('@cucumber/cucumber');
-// const { cleanup, handleError } = require('helpers/execution_flow');
-import { driver } from 'helpers/startup';
-import { cleanup, handleErr } from 'helpers/execution_flow';
+const selenium_driver = require('selenium-webdriver');
 
 const MIN_TIMEOUT = 10000;
 const AUTH_URL = 'https://annapurna:mountain@test.wwe-massive.com/';
@@ -28,19 +26,22 @@ const PAGES = {
 	'accounts page': { tab: false, link: `${AUTH_URL}account` }
 };
 
-// let driver;
+let driver;
+const cleanup = async () => {
+	if( driver ) await driver.quit();
+}
 
-// const handleErr = async (err) =>  {
-// 	await driver.quit();
-// 	throw err;
-// }
+const handleErr = async (err) => {
+	await cleanup();
+	throw err;
+}
 
 Given('I am on home page', {timeout: MIN_TIMEOUT}, async function() {
-	// driver = new webdriver.Builder()
-	// 	.forBrowser('chrome')
-	// 	.build();
-	// driver.manage().setTimeouts({implicit: 3 * MIN_TIMEOUT});
-	// await driver.manage().window().setRect({ width: 1920, height: 1080 });
+	driver = new selenium_driver.Builder()
+		.forBrowser('chrome')
+		.build();
+	driver.manage().setTimeouts({implicit: 3 * MIN_TIMEOUT});
+	await driver.manage().window().setRect({ width: 1920, height: 1080 });
 	await driver.get(AUTH_URL);
 })
 
@@ -128,7 +129,6 @@ Then('I should arrive on the {string}', {timeout: 2 * MIN_TIMEOUT}, async functi
 			await driver.switchTo().window((await driver.getAllWindowHandles())[1]);
 
 		const currentPage = await driver.getCurrentUrl()
-		// console.log('match: ', currentPage, ' vs. ', PAGES[page].link);
 		assert(currentPage);
 		assert(currentPage.match(new RegExp(PAGES[page].link)));
 	} catch(err) { handleErr(err) }
